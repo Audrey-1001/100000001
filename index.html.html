@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>复盘 · 苍苔旷野</title>
+<style>
+  :root {
+    --bg: #EAE6DB; --surface: #FFFFFF; --text-main: #2E312C; --text-sub: #787C73;
+    --moss: #8A9A72; --fern: #4A5D45; --border: #DCD8CE; --radius: 18px;
+    --shadow-md: 0 8px 24px rgba(74, 93, 69, 0.08); --shadow-lg: 0 16px 40px rgba(46, 49, 44, 0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; }
+  
+  body {
+    background-color: var(--bg);
+    background-image: radial-gradient(circle at 10% 10%, rgba(138, 154, 114, 0.1), transparent 40%), radial-gradient(circle at 90% 90%, rgba(74, 93, 69, 0.08), transparent 40%);
+    background-attachment: fixed; color: var(--text-main); font-size: 15px; line-height: 1.6; padding-bottom: 80px;
+    display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+  }
+
+  .header { width: 100%; position: sticky; top: 0; z-index: 100; background: rgba(234, 230, 219, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(0,0,0,0.04); padding: 16px 0; display: flex; flex-direction: column; align-items: center; }
+  .nav-box { position: relative; display: flex; width: 280px; background: #DCD8CE; border-radius: 30px; padding: 4px; }
+  .nav-box button { flex: 1; position: relative; z-index: 2; border: none; background: none; padding: 10px 0; font-size: 14px; font-weight: 600; color: var(--text-sub); cursor: pointer; transition: color 0.3s; outline: none;}
+  .nav-box button.active { color: var(--fern); }
+  .slider { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); background: #FFF; border-radius: 26px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); z-index: 1; }
+  .btn-set { position: absolute; right: 20px; top: 28px; background: none; border: none; font-size: 13px; color: var(--fern); cursor: pointer; font-weight: 700; padding: 6px 12px; border-radius: 8px; }
+  .btn-set:hover { background: rgba(74, 93, 69, 0.1); }
+
+  main { width: 100%; max-width: 640px; padding: 24px 20px; }
+  .card { background: var(--surface); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow-md); border: 1px solid rgba(255,255,255,0.8); animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+  .title-main { font-size: 20px; font-weight: 800; color: var(--text-main); letter-spacing: 0.5px; margin-bottom: 6px; }
+  .title-sub { font-size: 13px; color: var(--text-sub); margin-bottom: 20px; }
+  .section-title { font-size: 16px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: var(--text-main); }
+  
+  .select-all-btn { font-size: 12px; font-weight: 600; color: var(--moss); background: rgba(138, 154, 114, 0.15); border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; margin-left: auto; transition: 0.2s; outline: none;}
+  .select-all-btn:hover { background: rgba(138, 154, 114, 0.25); }
+
+  textarea { width: 100%; padding: 16px; border: 1px solid var(--border); border-radius: 12px; font-size: 15px; background: #F7F6F2; color: var(--text-main); outline: none; resize: none; overflow: hidden; line-height: 1.6; transition: 0.3s; }
+  textarea:focus { border-color: var(--moss); background: #FFF; box-shadow: 0 0 0 4px rgba(138, 154, 114, 0.15); }
+
+  .btn { display: flex; justify-content: center; align-items: center; width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; color: #FFF; background: var(--moss); cursor: pointer; transition: 0.3s; box-shadow: 0 4px 14px rgba(138, 154, 114, 0.3); letter-spacing: 0.5px; outline: none;}
+  .btn:hover { background: #7A8A63; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(138, 154, 114, 0.4);}
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  
+  .btn-dark { background: var(--fern); box-shadow: 0 4px 14px rgba(74, 93, 69, 0.3); }
+  .btn-dark:hover { background: #3D4D38; box-shadow: 0 6px 20px rgba(74, 93, 69, 0.4); }
+  
+  .btn-gho { background: transparent; color: var(--fern); font-weight: 600; padding: 10px; font-size: 14px; border: none; cursor: pointer; text-align: left; transition: 0.2s; outline: none;}
+  .btn-gho:hover { color: var(--moss); }
+
+  .task-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .task-item { display: flex; align-items: flex-start; gap: 14px; background: #FFF; border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: 0.2s; }
+  .task-item:hover { border-color: #C5C1B5; box-shadow: 0 4px 12px rgba(0,0,0,0.04);}
+  .task-item:focus-within { border-color: var(--moss); box-shadow: 0 0 0 3px rgba(138, 154, 114, 0.15); }
+  
+  .task-checkbox { margin-top: 2px; width: 20px; height: 20px; border: 1.5px solid #C5C1B5; border-radius: 6px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; cursor: pointer; transition: 0.2s; }
+  .task-checkbox::after { content: ''; width: 10px; height: 6px; border-left: 2px solid #FFF; border-bottom: 2px solid #FFF; transform: rotate(-45deg) scale(0.5); opacity: 0; transition: 0.2s; margin-top: -2px;}
+  .task-checkbox.checked { background: var(--moss); border-color: var(--moss); }
+  .task-checkbox.checked::after { opacity: 1; transform: rotate(-45deg) scale(1); }
+
+  .task-item textarea { border: none; background: transparent; padding: 0; font-size: 15px; font-weight: 500; box-shadow: none; margin-top: 0; color: var(--text-main);}
+  .task-item textarea:focus { box-shadow: none; border: none; background: transparent; }
+  .del-btn { background: none; border: none; color: #C5C1B5; font-size: 18px; cursor: pointer; padding: 0 4px; flex-shrink: 0; line-height: 1; transition: 0.2s; margin-top: 2px; outline:none;}
+  .del-btn:hover { color: #C97C7C; }
+
+  .chat-box { background: #F7F6F2; border: 1px solid var(--border); border-radius: 14px; padding: 8px 8px 8px 16px; margin-bottom: 16px; display: flex; gap: 10px; align-items: center; transition: 0.2s; }
+  .chat-box:focus-within { border-color: var(--moss); background: #FFF; box-shadow: 0 0 0 3px rgba(138, 154, 114, 0.15); }
+  .chat-box input { flex: 1; border: none; background: transparent; font-size: 14px; outline: none; color: var(--text-main); }
+  .chat-box input::placeholder { color: #9CA396; }
+  .chat-box button { background: var(--moss); color: #FFF; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.2s; display: flex; align-items: center; gap: 4px; outline: none;}
+  .chat-box button:hover { background: #7A8A63; }
+
+  .filter-bar { margin-bottom: 24px; }
+  .filter-bar input { width: 100%; padding: 16px 20px; border: 1px solid var(--border); border-radius: 16px; font-size: 14px; outline: none; background: #FFF; box-shadow: 0 2px 10px rgba(0,0,0,0.02); color: var(--text-main);}
+  .filter-bar input:focus { border-color: var(--moss); box-shadow: 0 0 0 3px rgba(138, 154, 114, 0.1); }
+  
+  .history-card { background: #FFF; border-radius: 18px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.03); border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+  .history-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.06); border-color: #C5C1B5; }
+  .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .history-name { font-size: 18px; font-weight: 800; color: var(--text-main);}
+  .tag { background: #EAE6DB; color: var(--fern); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+  .error-box { background: #F7F6F2; padding: 14px 16px; border-radius: 12px; font-size: 14px; color: var(--text-sub); margin-bottom: 12px; border: 1px solid var(--border); }
+  
+  .sec-title { font-size: 14px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: var(--text-main);}
+  .sec-body { margin-bottom: 16px; font-size: 14px; color: var(--text-sub); padding-left: 12px; border-left: 3px solid #DCD8CE; }
+  .sec-body li { margin-bottom: 10px; list-style: none; display: flex; gap: 8px; line-height: 1.6; }
+  .sec-body li::before { content: '•'; color: var(--moss); font-weight: bold; }
+  
+  .detail-content { display: none; border-top: 1px solid var(--border); padding-top: 16px; margin-top: 16px; animation: fadeIn 0.3s ease; }
+  .history-card.expanded .detail-content { display: block; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+  .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(234, 230, 219, 0.8); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+  .modal-c { background: #FFF; width: 90%; max-width: 400px; border-radius: 20px; padding: 28px; box-shadow: var(--shadow-lg); border: 1px solid var(--border);}
+  .form-g { margin-bottom: 20px; }
+  .form-g label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-main);}
+  .form-g input { width: 100%; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; background: #F7F6F2; color: var(--text-main);}
+  .form-g input:focus { border-color: var(--moss); background: #FFF; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="nav-box" id="nav">
+    <div class="slider" id="slider"></div>
+    <button data-tab="new" class="active">新增复盘</button>
+    <button data-tab="history">我的清单</button>
+  </div>
+  <button class="btn-set" id="btn-set">⚙️ AI 设置</button>
+</div>
+
+<main>
+  <div id="view-new">
+    <div class="card">
+      <div class="title-main">今天遇到了什么坑？</div>
+      <div class="title-sub">描述清楚，AI 会分三步协助你拆解。</div>
+      <textarea id="error-input" rows="3" placeholder="例如：数据搜集花了很长时间修改，想法一直变..."></textarea>
+      <button class="btn" id="btn-analyze" style="margin-top: 24px;">✨ 第一步：分析原因</button>
+    </div>
+
+    <div id="step-reason" class="hidden card">
+      <div class="section-title">
+        💡 原因分析 
+        <button class="select-all-btn" onclick="toggleSelectAll('reason-list')">全选 / 取消</button>
+      </div>
+      <div class="task-list" id="reason-list"></div>
+      <button class="btn-gho" id="btn-add-reason">+ 手动添加</button>
+      
+      <div class="chat-box">
+        <input type="text" id="prompt-reason" placeholder="对 AI 说：不够深入，再写深一点...">
+        <button onclick="regen('reason')">🪄 重写</button>
+      </div>
+      
+      <button class="btn btn-dark" id="btn-conf-reason" style="margin-top: 4px;">确认原因，生成复盘建议</button>
+    </div>
+
+    <div id="step-suggestion" class="hidden card">
+      <div class="section-title">
+        🎯 复盘建议清单
+        <button class="select-all-btn" onclick="toggleSelectAll('suggestion-list')">全选 / 取消</button>
+      </div>
+      <div class="task-list" id="suggestion-list"></div>
+      <button class="btn-gho" id="btn-add-suggestion">+ 手动添加</button>
+
+      <div class="chat-box">
+        <input type="text" id="prompt-suggestion" placeholder="对 AI 说：多给点具体的执行方案...">
+        <button onclick="regen('suggestion')">🪄 重写</button>
+      </div>
+
+      <button class="btn btn-dark" id="btn-conf-suggestion" style="margin-top: 4px;">确认建议，生成行动项</button>
+    </div>
+
+    <div id="step-action" class="hidden card">
+      <div class="section-title">
+        🚀 下次行动建议
+        <button class="select-all-btn" onclick="toggleSelectAll('action-list')">全选 / 取消</button>
+      </div>
+      <div class="task-list" id="action-list"></div>
+      <button class="btn-gho" id="btn-add-action">+ 手动添加</button>
+
+      <div class="chat-box">
+        <input type="text" id="prompt-action" placeholder="对 AI 说：步骤不够细，拆成三步...">
+        <button onclick="regen('action')">🪄 重写</button>
+      </div>
+
+      <button class="btn" id="btn-conf-action" style="margin-top: 4px;">确认行动，准备保存</button>
+    </div>
+
+    <div id="step-save" class="hidden card" style="background: transparent; box-shadow: none; border: none; padding: 0;">
+      <input type="text" id="save-name" placeholder="给这份经验起个名字" style="margin-bottom: 20px; width: 100%; text-align: center; font-weight: 700; font-size: 16px; padding:20px; border:1px solid var(--border); border-radius: 16px; background:#fff; outline:none; box-shadow: 0 4px 14px rgba(0,0,0,0.05); color:var(--text-main);">
+      <button class="btn" id="btn-save">保存到我的经验库</button>
+    </div>
+  </div>
+
+  <div id="view-history" class="hidden">
+    <div class="filter-bar"><input type="search" id="search-input" placeholder="搜索错误、建议或行动..."></div>
+    <div id="history-list"></div>
+  </div>
+</main>
+
+<div id="modal-set" class="modal hidden">
+  <div class="modal-c">
+    <div class="title-main" style="margin-bottom: 24px; font-size: 20px;">⚙️ 配置 AI 模型</div>
+    <div class="form-g"><label>接口地址</label><input type="text" id="api-url" placeholder="https://api.deepseek.com/chat/completions"></div>
+    <div class="form-g"><label>API Key</label><input type="password" id="api-key" placeholder="sk-..."></div>
+    <div class="form-g"><label>模型名称</label><input type="text" id="api-model" placeholder="deepseek-flash"></div>
+    <div style="display: flex; gap: 12px; margin-top: 32px;">
+      <button class="btn" id="btn-save-set">保存配置</button>
+      <button class="btn" style="background: #EAE6DB; color: var(--text-main); box-shadow:none;" id="btn-close-set">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let DB = JSON.parse(localStorage.getItem('fupan_moss_v2')) || [];
+let API = JSON.parse(localStorage.getItem('fupan_api_config')) || { url: 'https://api.deepseek.com/chat/completions', key: '', model: 'deepseek-flash' };
+function saveData() { localStorage.setItem('fupan_moss_v2', JSON.stringify(DB)); }
+
+const nav = document.getElementById('nav');
+const slider = document.getElementById('slider');
+nav.querySelectorAll('button').forEach((btn, i) => {
+  btn.onclick = () => {
+    slider.style.transform = i === 0 ? 'translateX(0)' : 'translateX(100%)';
+    document.getElementById('view-new').classList.toggle('hidden', i !== 0);
+    document.getElementById('view-history').classList.toggle('hidden', i === 0);
+    nav.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if(i === 1) renderHistory();
+  };
+});
+
+window.toggleSelectAll = (listId) => {
+  const checkboxes = document.querySelectorAll(`#${listId} .task-checkbox`);
+  if(checkboxes.length === 0) return;
+  const allChecked = Array.from(checkboxes).every(cb => cb.classList.contains('checked'));
+  checkboxes.forEach(cb => {
+    if (allChecked) cb.classList.remove('checked');
+    else cb.classList.add('checked');
+  });
+};
+
+function autoSize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+document.addEventListener('input', e => { if(e.target.tagName === 'TEXTAREA') autoSize(e.target); });
+
+function addItem(id, val = '') {
+  const box = document.getElementById(id);
+  const div = document.createElement('div');
+  div.className = 'task-item';
+  div.innerHTML = `
+    <div class="task-checkbox"></div>
+    <textarea rows="1">${val}</textarea>
+    <button class="del-btn">×</button>
+  `;
+  const ta = div.querySelector('textarea');
+  div.querySelector('.task-checkbox').onclick = (e) => e.target.classList.toggle('checked');
+  div.querySelector('.del-btn').onclick = () => {
+    div.style.opacity = '0'; div.style.transform = 'translateX(10px)';
+    setTimeout(() => div.remove(), 200);
+  };
+  box.appendChild(div);
+  setTimeout(() => { autoSize(ta); ta.oninput = () => autoSize(ta); }, 0);
+}
+
+document.getElementById('btn-add-reason').onclick = () => addItem('reason-list');
+document.getElementById('btn-add-suggestion').onclick = () => addItem('suggestion-list');
+document.getElementById('btn-add-action').onclick = () => addItem('action-list');
+
+function getList(id) {
+  const arr = [];
+  document.querySelectorAll(`#${id} textarea`).forEach(t => { if(t.value.trim()) arr.push(t.value.trim()); });
+  return arr;
+}
+
+async function callAI(sys, user) {
+  const res = await fetch(API.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API.key}` },
+    body: JSON.stringify({ model: API.model, messages: [{ role: 'system', content: sys }, { role: 'user', content: user }], temperature: 0.7 })
+  });
+  if(!res.ok) throw new Error('API Error');
+  const data = await res.json();
+  let text = data.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim();
+  return JSON.parse(text);
+}
+
+document.getElementById('btn-analyze').onclick = async () => {
+  const err = document.getElementById('error-input').value.trim();
+  if(!err) return alert('请描述错误');
+  if(!API.key) return alert('请先配置 AI Key');
+
+  const btn = document.getElementById('btn-analyze');
+  btn.innerText = '分析中...'; btn.disabled = true;
+  try {
+    const sys = `你是专业复盘教练。分析用户错误，严格输出 JSON：{"reasons":["原因1","原因2"]}`;
+    const r = await callAI(sys, `错误：${err}`);
+    document.getElementById('reason-list').innerHTML = '';
+    r.reasons.forEach(v => addItem('reason-list', v));
+    document.getElementById('step-reason').classList.remove('hidden');
+    document.getElementById('step-reason').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch(e) { alert('调用失败'); }
+  btn.innerText = '✨ 第一步：分析原因'; btn.disabled = false;
+};
+
+document.getElementById('btn-conf-reason').onclick = async () => {
+  const err = document.getElementById('error-input').value.trim();
+  const reasons = getList('reason-list');
+  if(!reasons.length) return alert('请保留至少一条原因');
+
+  const btn = document.getElementById('btn-conf-reason');
+  btn.innerText = 'AI 正在生成复盘建议...'; btn.disabled = true;
+  
+  document.getElementById('step-suggestion').classList.remove('hidden');
+  document.getElementById('step-suggestion').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  try {
+    const sys = `你是专业复盘教练。根据错误和原因，给出防错建议。严格输出 JSON：{"suggestions":["建议1","建议2"]}`;
+    const r = await callAI(sys, `错误：${err}\n原因：${reasons.join('；')}`);
+    document.getElementById('suggestion-list').innerHTML = '';
+    r.suggestions.forEach(v => addItem('suggestion-list', v));
+  } catch(e) { 
+    alert('生成建议失败，请检查网络或配置'); 
+    document.getElementById('step-suggestion').classList.add('hidden');
+  }
+  btn.innerText = '确认原因，生成复盘建议'; btn.disabled = false;
+};
+
+document.getElementById('btn-conf-suggestion').onclick = async () => {
+  const err = document.getElementById('error-input').value.trim();
+  const reasons = getList('reason-list');
+  const suggestions = getList('suggestion-list');
+  if(!suggestions.length) return alert('请保留至少一条建议');
+
+  const btn = document.getElementById('btn-conf-suggestion');
+  btn.innerText = 'AI 正在生成行动步骤...'; btn.disabled = true;
+
+  document.getElementById('step-action').classList.remove('hidden');
+  document.getElementById('step-action').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  try {
+    const sys = `你是执行教练。按顺序给出具体操作步骤。严格输出 JSON：{"actions":["步骤1","步骤2"]}`;
+    const r = await callAI(sys, `错误：${err}\n原因：${reasons.join('；')}\n建议：${suggestions.join('；')}`);
+    document.getElementById('action-list').innerHTML = '';
+    r.actions.forEach(v => addItem('action-list', v));
+  } catch(e) { 
+    alert('生成行动失败，请重试'); 
+    document.getElementById('step-action').classList.add('hidden');
+  }
+  btn.innerText = '确认建议，生成行动项'; btn.disabled = false;
+};
+
+window.regen = async (step) => {
+  const err = document.getElementById('error-input').value.trim();
+  const reasons = getList('reason-list');
+  const suggestions = getList('suggestion-list');
+  const promptInput = document.getElementById(`prompt-${step}`).value.trim();
+  if(!promptInput) return alert('请告诉 AI 你的要求，如：再精简一点');
+
+  let sys = '', user = '', listId = '';
+  if (step === 'reason') {
+    sys = `你是专业复盘教练。根据修改指令，重写原因。严格输出 JSON：{"reasons":["原因1","原因2"]}`;
+    user = `错误：${err}\n要求：${promptInput}`;
+    listId = 'reason-list';
+  } else if (step === 'suggestion') {
+    sys = `你是专业复盘教练。根据修改指令，重写建议。严格输出 JSON：{"suggestions":["建议1","建议2"]}`;
+    user = `错误：${err}\n原因：${reasons.join('；')}\n要求：${promptInput}`;
+    listId = 'suggestion-list';
+  } else if (step === 'action') {
+    sys = `你是执行教练。根据修改指令，重写行动步骤。严格输出 JSON：{"actions":["步骤1","步骤2"]}`;
+    user = `错误：${err}\n原因：${reasons.join('；')}\n建议：${suggestions.join('；')}\n要求：${promptInput}`;
+    listId = 'action-list';
+  }
+
+  const btn = document.querySelector(`#step-${step} .chat-box button`);
+  btn.innerHTML = '重写中...'; btn.disabled = true;
+  try {
+    const r = await callAI(sys, user);
+    document.getElementById(listId).innerHTML = '';
+    const list = r.reasons || r.suggestions || r.actions;
+    list.forEach(v => addItem(listId, v));
+    document.getElementById(`prompt-${step}`).value = '';
+  } catch(e) { alert('修改失败'); }
+  btn.innerHTML = '🪄 重写'; btn.disabled = false;
+};
+
+document.getElementById('btn-conf-action').onclick = () => {
+  if(!getList('action-list').length) return alert('请保留至少一条行动步骤');
+  document.getElementById('step-save').classList.remove('hidden');
+  document.getElementById('step-save').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('save-name').focus();
+};
+
+document.getElementById('btn-save').onclick = () => {
+  const name = document.getElementById('save-name').value.trim();
+  if(!name) return alert('起个名字');
+  DB.push({
+    id: Date.now().toString(), name,
+    error: document.getElementById('error-input').value.trim(),
+    reasons: getList('reason-list'), suggestions: getList('suggestion-list'), actions: getList('action-list'),
+    date: new Date().toLocaleDateString('zh-CN')
+  });
+  saveData();
+  alert('已保存');
+  ['error-input', 'save-name'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('error-input').style.height = 'auto';
+  ['step-reason', 'step-suggestion', 'step-action', 'step-save'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  nav.querySelectorAll('button')[1].click();
+};
+
+const searchInput = document.getElementById('search-input');
+searchInput.oninput = () => renderHistory(searchInput.value);
+
+function renderHistory(kw = '') {
+  const list = document.getElementById('history-list');
+  const data = DB.filter(r => !kw || r.name.includes(kw) || r.error.includes(kw));
+  if(!data.length) return list.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-sub);">暂无记录</div>`;
+  
+  list.innerHTML = data.slice().reverse().map(r => `
+    <div class="history-card" onclick="toggleExpand(this, event)">
+      <div class="history-header">
+        <div class="history-name">${r.name}</div>
+        <div class="tag">${r.date}</div>
+      </div>
+      
+      <div class="error-box"><b>踩坑：</b>${r.error}</div>
+      
+      <div class="sec-title">💡 原因分析</div>
+      <ul class="sec-body">${r.reasons.slice(0, 2).map(x => `<li>${x}</li>`).join('')}${r.reasons.length > 2 ? `<li style="color:#9CA396;">...点击查看全部</li>` : ''}</ul>
+      
+      <div class="detail-content">
+        <div class="sec-title">🎯 复盘建议</div>
+        <ul class="sec-body">${r.suggestions.map(x => `<li>${x}</li>`).join('')}</ul>
+        
+        <div class="sec-title" style="color:var(--moss);">🚀 下次行动步骤</div>
+        <ul class="sec-body" style="border-color:var(--moss);">${r.actions.map(x => `<li style="font-weight:500; color:var(--moss);">${x}</li>`).join('')}</ul>
+        
+        <div style="text-align: right; margin-top: 16px; display:flex; justify-content: flex-end; gap:12px;">
+          <button class="btn-gho" onclick="copyAction('${r.id}', event)">📋 复制行动</button>
+          <button class="btn-gho" style="color:#C97C7C;" onclick="del('${r.id}', event)">删除</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.toggleExpand = (card, event) => {
+  if(event.target.tagName === 'BUTTON') return;
+  card.classList.toggle('expanded');
+};
+
+window.del = (id, event) => { 
+  event.stopPropagation();
+  if(confirm('删除？')) { DB = DB.filter(x => x.id !== id); saveData(); renderHistory(searchInput.value); } 
+}
+
+window.copyAction = (id, event) => { 
+  event.stopPropagation();
+  const r = DB.find(x => x.id === id); 
+  navigator.clipboard.writeText(`【下次行动】\n` + r.actions.map((a,i) => `${i+1}. ${a}`).join('\n')); 
+  alert('已复制'); 
+}
+
+document.getElementById('btn-set').onclick = () => {
+  document.getElementById('api-url').value = API.url; document.getElementById('api-key').value = API.key; document.getElementById('api-model').value = API.model;
+  document.getElementById('modal-set').classList.remove('hidden');
+};
+document.getElementById('btn-close-set').onclick = () => document.getElementById('modal-set').classList.add('hidden');
+document.getElementById('btn-save-set').onclick = () => {
+  API = { url: document.getElementById('api-url').value.trim(), key: document.getElementById('api-key').value.trim(), model: document.getElementById('api-model').value.trim() };
+  localStorage.setItem('fupan_api_config', JSON.stringify(API));
+  document.getElementById('modal-set').classList.add('hidden');
+};
+
+renderHistory();
+</script>
+</body>
+</html>
